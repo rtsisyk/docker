@@ -14,6 +14,8 @@ RUN useradd -s /bin/bash -G adm,wheel,systemd-journal -m roman -u 1000
 
 # Deps for tarantool
 RUN dnf -y install cmake readline-devel binutils-devel libyaml-devel
+# Deps for lua modules
+RUN dnf -y install luajit luajit-devel lua lua-devel
 
 WORKDIR /home/roman
 USER roman
