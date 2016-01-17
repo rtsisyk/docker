@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# dockerdo DOCKER_IMAGE_TAG command [args]
+# dockerdo rtsisyk/env:fedora /bin/bash
+
+die() { echo $1; exit 1; }
+[ -n "$1" ] || die "Usage: $0 TAG command [args]"
+
+TAG=$1
+USERTAG="${TAG}-for-${USER}"
+shift
+
+UID=$(id -u)
+PWD=$(pwd)
+
+(cat << EOF
+FROM ${TAG}
+RUN useradd -s ${SHELL} -G adm,wheel -u ${UID} -d ${HOME} -m ${USER}
+RUN usermod -a -G mock ${USER} || : # For RPM-based distros
+USER ${USER}
+EOF
+) |
+docker build --rm=true --quiet=true -t ${USERTAG} - 1> /dev/null \
+    || die "Failed to build container"
+
+docker run \
+    --volume ${HOME}:${HOME} \
+    --volume ${PWD}:${PWD} \
+    --workdir ${PWD} \
+    --rm=true -i -t ${USERTAG} \
+    $@
